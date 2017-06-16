@@ -28,6 +28,9 @@ class Player
                 int currentPlayerStartingY = int.Parse(inputs[1]); // starting Y coordinate of lightcycle (or -1)
                 int currentPlayerCurrentX = int.Parse(inputs[2]); // current X coordinate of lightcycle (can be the same as X0 if you play before this player)
                 int currentPlayerCurrentY = int.Parse(inputs[3]); // current Y coordinate of lightcycle (can be the same as Y0 if you play before this player)
+
+                Console.Error.WriteLine("Player " + currentPlayer + " starting position: " + currentPlayerStartingX + ", " + currentPlayerStartingY);
+                Console.Error.WriteLine("Player " + currentPlayer + " current position: " + currentPlayerCurrentX + ", " + currentPlayerCurrentY);
             }
 
             // Write an action using Console.WriteLine()
