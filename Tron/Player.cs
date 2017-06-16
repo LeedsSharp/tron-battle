@@ -19,15 +19,15 @@ class Player
         while (true)
         {
             inputs = Console.ReadLine().Split(' ');
-            int N = int.Parse(inputs[0]); // total number of players (2 to 4).
-            int P = int.Parse(inputs[1]); // your player number (0 to 3).
-            for (int i = 0; i < N; i++)
+            int totalNumberOfPlayers = int.Parse(inputs[0]); // total number of players (2 to 4).
+            int yourPlayerNumber = int.Parse(inputs[1]); // your player number (0 to 3).
+            for (int currentPlayer = 0; currentPlayer < totalNumberOfPlayers; currentPlayer++)
             {
                 inputs = Console.ReadLine().Split(' ');
-                int X0 = int.Parse(inputs[0]); // starting X coordinate of lightcycle (or -1)
-                int Y0 = int.Parse(inputs[1]); // starting Y coordinate of lightcycle (or -1)
-                int X1 = int.Parse(inputs[2]); // starting X coordinate of lightcycle (can be the same as X0 if you play before this player)
-                int Y1 = int.Parse(inputs[3]); // starting Y coordinate of lightcycle (can be the same as Y0 if you play before this player)
+                int currentPlayerStartingX = int.Parse(inputs[0]); // starting X coordinate of lightcycle (or -1)
+                int currentPlayerStartingY = int.Parse(inputs[1]); // starting Y coordinate of lightcycle (or -1)
+                int currentPlayerCurrentX = int.Parse(inputs[2]); // current X coordinate of lightcycle (can be the same as X0 if you play before this player)
+                int currentPlayerCurrentY = int.Parse(inputs[3]); // current Y coordinate of lightcycle (can be the same as Y0 if you play before this player)
             }
 
             // Write an action using Console.WriteLine()
