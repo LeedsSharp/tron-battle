@@ -15,6 +15,8 @@ class Player
     {
         string[] inputs;
 
+        var grid = new bool[30, 20]; // true means a player has been at this coordinate
+
         // game loop
         while (true)
         {
@@ -31,6 +33,8 @@ class Player
 
                 Console.Error.WriteLine("Player " + currentPlayer + " starting position: " + currentPlayerStartingX + ", " + currentPlayerStartingY);
                 Console.Error.WriteLine("Player " + currentPlayer + " current position: " + currentPlayerCurrentX + ", " + currentPlayerCurrentY);
+
+                grid[currentPlayerCurrentX, currentPlayerCurrentY] = true;
             }
 
             // Write an action using Console.WriteLine()
