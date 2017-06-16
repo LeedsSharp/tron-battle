@@ -14,6 +14,7 @@ class Player
     static void Main(string[] args)
     {
         string[] inputs;
+        string[] directions = { "UP", "DOWN", "LEFT", "RIGHT" };
 
         var grid = new bool[30, 20]; // true means a player has been at this coordinate
 
@@ -37,10 +38,14 @@ class Player
                 grid[currentPlayerCurrentX, currentPlayerCurrentY] = true;
             }
 
-            // Write an action using Console.WriteLine()
-            // To debug: Console.Error.WriteLine("Debug messages...");
-
-            Console.WriteLine("LEFT"); // A single line with UP, DOWN, LEFT or RIGHT
+            var nextMove = RandomMouse(directions);
+            Console.WriteLine(nextMove); // A single line with UP, DOWN, LEFT or RIGHT
         }
+    }
+
+    private static object RandomMouse(string[] directions)
+    {
+        var randomiser = new Random(DateTime.Now.Millisecond);
+        return directions[randomiser.Next(directions.Length)];
     }
 }
