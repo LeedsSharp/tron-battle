@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Drawing;
+using System.Linq;
 
 class Player
 {
@@ -40,42 +42,39 @@ class Player
 
 				if (i == myPlayerNumber)
 	            {
-		            string newDirection = null;
+		            var newDirectionOptions = new Collection<string>();
 
 		            if (y > 0 && currentDirection != Down && !closedCells.Contains(new Point(x, y - 1)))
 		            {
 						// Can move up
-			            newDirection = Up;
+			            newDirectionOptions.Add(Up);
 		            }
 
-					else if (y < GridMaxY && currentDirection != Up && !closedCells.Contains(new Point(x, y + 1)))
+					if (y < GridMaxY && currentDirection != Up && !closedCells.Contains(new Point(x, y + 1)))
 		            {
 						// Can move down
-			            newDirection = Down;
+			            newDirectionOptions.Add(Down);
 		            }
 
-					else if (x > 0 && currentDirection != Right && !closedCells.Contains(new Point(x - 1, y)))
+					if (x > 0 && currentDirection != Right && !closedCells.Contains(new Point(x - 1, y)))
 		            {
 						// Can move leftLeft;
-			            newDirection = Left;
+			            newDirectionOptions.Add(Left);
 		            }
 
-					else if (x < GridMaxX && currentDirection != Left && !closedCells.Contains(new Point(x + 1, y)))
+					if (x < GridMaxX && currentDirection != Left && !closedCells.Contains(new Point(x + 1, y)))
 		            {
 						// Can move right
-			            newDirection = Right;
-		            }
-
-		            else
-		            {
-			            // Ah bugger ...
+			            newDirectionOptions.Add(Right);
 		            }
 
 					// Retain direction
-		            currentDirection = newDirection;
+		            string newDirection = newDirectionOptions.OrderBy(o => Guid.NewGuid()).First();
+
+					currentDirection = newDirection;
 
 					// Set direction
-		            Console.WriteLine(newDirection);
+					Console.WriteLine(newDirection);
 				}
 			}
 
