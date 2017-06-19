@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Drawing;
 
 class Player
 {
@@ -16,6 +18,7 @@ class Player
         string[] inputs;
 
 	    string currentDirection = null;
+		var closedCells = new HashSet<Point>();
 
         // game loop
         while (true)
@@ -30,29 +33,34 @@ class Player
 				int x = int.Parse(inputs[2]); // starting X coordinate of lightcycle (can be the same as X0 if you play before this player)
                 int y = int.Parse(inputs[3]); // starting Y coordinate of lightcycle (can be the same as Y0 if you play before this player)
 
-	            if (i == myPlayerNumber)
+				
+				// Regardless of the player, add the current cell to a list of closed cells
+	            closedCells.Add(new Point(x, y));
+
+
+				if (i == myPlayerNumber)
 	            {
 		            string newDirection = null;
 
-		            if (y > 0 && currentDirection != Down)
+		            if (y > 0 && currentDirection != Down && !closedCells.Contains(new Point(x, y - 1)))
 		            {
 						// Can move up
 			            newDirection = Up;
 		            }
 
-					else if (y < GridMaxY && currentDirection != Up)
+					else if (y < GridMaxY && currentDirection != Up && !closedCells.Contains(new Point(x, y + 1)))
 		            {
 						// Can move down
 			            newDirection = Down;
 		            }
 
-					else if (x > 0 && currentDirection != Right)
+					else if (x > 0 && currentDirection != Right && !closedCells.Contains(new Point(x - 1, y)))
 		            {
 						// Can move leftLeft;
 			            newDirection = Left;
 		            }
 
-					else if (x < GridMaxX && currentDirection != Left)
+					else if (x < GridMaxX && currentDirection != Left && !closedCells.Contains(new Point(x + 1, y)))
 		            {
 						// Can move right
 			            newDirection = Right;
