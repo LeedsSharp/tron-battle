@@ -1,39 +1,79 @@
 using System;
-using System.Linq;
-using System.IO;
-using System.Text;
-using System.Collections;
-using System.Collections.Generic;
 
-/**
- * Auto-generated code below aims at helping you parse
- * the standard input according to the problem statement.
- **/
 class Player
 {
-    static void Main(string[] args)
+	private const string Left = "LEFT";
+	private const string Right = "RIGHT";
+	private const string Up = "UP";
+	private const string Down = "DOWN";
+
+	private const int GridMaxX = 29;
+	private const int GridMaxY = 19;
+
+
+	static void Main(string[] args)
     {
         string[] inputs;
+
+	    string currentDirection = null;
 
         // game loop
         while (true)
         {
             inputs = Console.ReadLine().Split(' ');
-            int N = int.Parse(inputs[0]); // total number of players (2 to 4).
-            int P = int.Parse(inputs[1]); // your player number (0 to 3).
-            for (int i = 0; i < N; i++)
+            int numberOfPlayers = int.Parse(inputs[0]); // total number of players (2 to 4).
+            int myPlayerNumber = int.Parse(inputs[1]); // your player number (0 to 3).
+            for (int i = 0; i < numberOfPlayers; i++)
             {
                 inputs = Console.ReadLine().Split(' ');
-                int X0 = int.Parse(inputs[0]); // starting X coordinate of lightcycle (or -1)
-                int Y0 = int.Parse(inputs[1]); // starting Y coordinate of lightcycle (or -1)
-                int X1 = int.Parse(inputs[2]); // starting X coordinate of lightcycle (can be the same as X0 if you play before this player)
-                int Y1 = int.Parse(inputs[3]); // starting Y coordinate of lightcycle (can be the same as Y0 if you play before this player)
-            }
 
-            // Write an action using Console.WriteLine()
-            // To debug: Console.Error.WriteLine("Debug messages...");
+				int x = int.Parse(inputs[2]); // starting X coordinate of lightcycle (can be the same as X0 if you play before this player)
+                int y = int.Parse(inputs[3]); // starting Y coordinate of lightcycle (can be the same as Y0 if you play before this player)
 
-            Console.WriteLine("LEFT"); // A single line with UP, DOWN, LEFT or RIGHT
+	            if (i == myPlayerNumber)
+	            {
+		            string newDirection = null;
+
+		            if (y > 0 && currentDirection != Down)
+		            {
+						// Can move up
+			            newDirection = Up;
+		            }
+
+					else if (y < GridMaxY && currentDirection != Up)
+		            {
+						// Can move down
+			            newDirection = Down;
+		            }
+
+					else if (x > 0 && currentDirection != Right)
+		            {
+						// Can move leftLeft;
+			            newDirection = Left;
+		            }
+
+					else if (x < GridMaxX && currentDirection != Left)
+		            {
+						// Can move right
+			            newDirection = Right;
+		            }
+
+		            else
+		            {
+			            // Ah bugger ...
+		            }
+
+					// Retain direction
+		            currentDirection = newDirection;
+
+					// Set direction
+		            Console.WriteLine(newDirection);
+				}
+			}
+
         }
+
     }
+
+
 }
