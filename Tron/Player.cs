@@ -24,6 +24,9 @@ class Player
 			int numberOfPlayers = int.Parse(inputs[0]); // total number of players (2 to 4).
 			int myPlayerNumber = int.Parse(inputs[1]); // your player number (0 to 3).
 
+			Cell currentCell = null;
+
+			// Determine cells prior to making move
 			for (int i = 0; i < numberOfPlayers; i++)
 			{
 				inputs = Console.ReadLine().Split(' ');
@@ -31,34 +34,42 @@ class Player
 				int x = int.Parse(inputs[2]); // starting X coordinate of lightcycle (can be the same as X0 if you play before this player)
 				int y = int.Parse(inputs[3]); // starting Y coordinate of lightcycle (can be the same as Y0 if you play before this player)
 
-
 				// Regardless of the player, add the current cell to a list of closed cells
 				TheGrid.AddClosedCell(x, y);
 
+				// Retain my player's current cell
+				if (i == myPlayerNumber)
+				{
+					currentCell = TheGrid.Cell(x, y);
+				}
+			}
 
+
+			for (int i = 0; i < numberOfPlayers; i++)
+			{
 				if (i == myPlayerNumber)
 				{
 					var newDirectionOptions = new Collection<string>();
 
-					if (y > 0 && currentDirection != Down && !TheGrid.HasClosedCell(x, y - 1))
+					if (currentCell.Y > 0 && currentDirection != Down && !TheGrid.HasClosedCell(currentCell.X, currentCell.Y - 1))
 					{
 						// Can move up
 						newDirectionOptions.Add(Up);
 					}
 
-					if (y < TheGrid.MaxY && currentDirection != Up && !TheGrid.HasClosedCell(x, y + 1))
+					if (currentCell.Y < TheGrid.MaxY && currentDirection != Up && !TheGrid.HasClosedCell(currentCell.X, currentCell.Y + 1))
 					{
 						// Can move down
 						newDirectionOptions.Add(Down);
 					}
 
-					if (x > 0 && currentDirection != Right && !TheGrid.HasClosedCell(x - 1, y))
+					if (currentCell.X > 0 && currentDirection != Right && !TheGrid.HasClosedCell(currentCell.X - 1, currentCell.Y))
 					{
 						// Can move leftLeft;
 						newDirectionOptions.Add(Left);
 					}
 
-					if (x < TheGrid.MaxX && currentDirection != Left && !TheGrid.HasClosedCell(x + 1, y))
+					if (currentCell.X < TheGrid.MaxX && currentDirection != Left && !TheGrid.HasClosedCell(currentCell.X + 1, currentCell.Y))
 					{
 						// Can move right
 						newDirectionOptions.Add(Right);
@@ -72,13 +83,12 @@ class Player
 					// Set direction
 					Console.WriteLine(newDirection);
 				}
-			}
+			}}
 
 		}
 
 	}
 
-}
 
 public class Grid
 {
@@ -97,14 +107,19 @@ public class Grid
 		MaxY = height - 1;
 	}
 
+	public Cell Cell(int x, int y)
+	{
+		return new Cell(x, y, this);
+	}
+
 	public void AddClosedCell(int x, int y)
 	{
-		ClosedCells.Add(new Cell(x, y, this));
+		ClosedCells.Add(Cell(x, y));
 	}
 
 	public bool HasClosedCell(int x, int y)
 	{
-		return ClosedCells.Contains(new Cell(x, y, this));
+		return ClosedCells.Contains(Cell(x, y));
 	}
 }
 
