@@ -4,41 +4,39 @@ using System.Linq;
 
 class Player
 {
-	private const string Left = "LEFT";
-	private const string Right = "RIGHT";
-	private const string Up = "UP";
-	private const string Down = "DOWN";
-
 	private static readonly Grid TheGrid = new Grid(30, 20);
+	private static readonly IDictionary<int, PlayerContext> PlayerContexts = new Dictionary<int, PlayerContext>();
 
 	static void Main(string[] args)
 	{
-		string currentDirection = null;
-
-		// game loop
 		while (true)
 		{
-			var inputs = Console.ReadLine().Split(' ');
-			int numberOfPlayers = int.Parse(inputs[0]); // total number of players (2 to 4).
-			int myPlayerNumber = int.Parse(inputs[1]); // your player number (0 to 3).
+			var inputs = Console.ReadLine().Split(' ').Select(Int32.Parse).ToArray();
+			int numberOfPlayers = inputs[0]; // total number of players (2 to 4).
+			int myPlayerNumber = inputs[1]; // your player number (0 to 3).
 
-			Cell currentCell = null;
 
 			// Determine cells prior to making move
 			for (int i = 0; i < numberOfPlayers; i++)
 			{
-				inputs = Console.ReadLine().Split(' ');
+				inputs = Console.ReadLine().Split(' ').Select(Int32.Parse).ToArray();
 
-				int x = int.Parse(inputs[2]); // starting X coordinate of lightcycle (can be the same as X0 if you play before this player)
-				int y = int.Parse(inputs[3]); // starting Y coordinate of lightcycle (can be the same as Y0 if you play before this player)
+				int x = inputs[2]; // starting X coordinate of lightcycle (can be the same as X0 if you play before this player)
+				int y = inputs[3]; // starting Y coordinate of lightcycle (can be the same as Y0 if you play before this player)
 
 				// Regardless of the player, add the current cell to a list of closed cells
 				TheGrid.AddClosedCell(x, y);
 
+				// Ensure a player context exists for each player.
+				if (!PlayerContexts.ContainsKey(i))
+				{
+					PlayerContexts.Add(i, new PlayerContext(TheGrid));
+				}
+
 				// Retain my player's current cell
 				if (i == myPlayerNumber)
 				{
-					currentCell = TheGrid.Cell(x, y);
+					PlayerContexts[i].SetCurrentCell(TheGrid.Cell(x, y));
 				}
 			}
 
@@ -48,35 +46,98 @@ class Player
 				if (i != myPlayerNumber)
 					continue;
 
+				var playerContext = PlayerContexts[myPlayerNumber];
+
 				var floodFill = new FloodFillAlgorithm(TheGrid);
-				var immediateNeighbours = floodFill.NeighboursOf(currentCell, 30);
+				var immediateNeighbours = floodFill.NeighboursOf(playerContext.CurrentCell, 30);
 				var nextCell = immediateNeighbours.OrderByDescending(n => n.Value).ThenBy(n => Guid.NewGuid()).First().Key;
 
-				string newDirection = null;
-
-				if (nextCell.X > currentCell.X)
-				{
-					newDirection = Right;
-				}
-				else if (nextCell.X < currentCell.X)
-				{
-					newDirection = Left;
-				}
-				else if (nextCell.Y > currentCell.Y)
-				{
-					newDirection = Down;
-				}
-				else
-				{
-					newDirection = Up;
-				}
+				// Record direction
+				playerContext.SetNewDirection(nextCell);
 
 				// Set direction
-				Console.WriteLine(newDirection);
+				Console.WriteLine(playerContext.CurrentDirection);
 			}
 
 		}
 
+	}
+
+}
+
+public class PlayerContext
+{
+	private const string Left = "LEFT";
+	private const string Right = "RIGHT";
+	private const string Up = "UP";
+	private const string Down = "DOWN";
+
+	private readonly Grid _grid;
+
+	public readonly HashSet<Cell> Path;
+	public Cell CurrentCell { get; private set; }
+	public Cell PreviousCell { get; private set; }
+	public string CurrentDirection { get; private set; }
+
+	public PlayerContext(Grid grid)
+	{
+		_grid = grid;
+
+		Path = new HashSet<Cell>();
+	}
+
+	public void SetCurrentCell(Cell cell)
+	{
+		// Retain previous cell
+		PreviousCell = CurrentCell;
+
+		CurrentCell = cell;
+		Path.Add(cell);
+	}
+
+	public void SetNewDirection(string direction)
+	{
+		CurrentDirection = direction;
+	}
+
+	public void SetNewDirection(Cell nextCell)
+	{
+		if (nextCell.X > CurrentCell.X)
+		{
+			CurrentDirection = Right;
+		}
+		else if (nextCell.X < CurrentCell.X)
+		{
+			CurrentDirection = Left;
+		}
+		else if (nextCell.Y > CurrentCell.Y)
+		{
+			CurrentDirection = Down;
+		}
+		else
+		{
+			CurrentDirection = Up;
+		}
+	}
+
+	public bool CanMoveUp()
+	{
+		return !(CurrentCell.Y == 0 || CurrentDirection == Down || _grid.Cell(CurrentCell.X, CurrentCell.Y - 1).IsClosed());
+	}
+
+	public bool CanMoveDown()
+	{
+		return !(CurrentCell.Y == _grid.MaxY || CurrentDirection == Up || _grid.Cell(CurrentCell.X, CurrentCell.Y + 1).IsClosed());
+	}
+
+	public bool CanMoveLeft()
+	{
+		return !(CurrentCell.X == 0 || CurrentDirection == Right || _grid.Cell(CurrentCell.X - 1, CurrentCell.Y).IsClosed());
+	}
+
+	public bool CanMoveRight()
+	{
+		return !(CurrentCell.X == _grid.MaxX || CurrentDirection == Left || _grid.Cell(CurrentCell.X + 1, CurrentCell.Y).IsClosed());
 	}
 
 }
