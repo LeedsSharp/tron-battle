@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -34,10 +35,7 @@ class Player
 				}
 
 				// Retain my player's current cell
-				if (i == myPlayerNumber)
-				{
-					PlayerContexts[i].SetCurrentCell(TheGrid.Cell(x, y));
-				}
+				PlayerContexts[i].SetCurrentCell(TheGrid.Cell(x, y));
 			}
 
 
@@ -47,10 +45,14 @@ class Player
 					continue;
 
 				var playerContext = PlayerContexts[myPlayerNumber];
+				var opponentContext = PlayerContexts.FirstOrDefault(x => x.Key != myPlayerNumber).Value;
+
+				var pathfinder = new PathfinderAlgorithm();
+				var pathToOpponent = pathfinder.FindPath(playerContext.CurrentCell, opponentContext.CurrentCell);
 
 				var floodFill = new FloodFillAlgorithm(TheGrid);
-				var immediateNeighbours = floodFill.NeighboursOf(playerContext.CurrentCell, 30);
-				var nextCell = immediateNeighbours.OrderByDescending(n => n.Value).ThenBy(n => Guid.NewGuid()).First().Key;
+				var floodfillCounts = floodFill.NeighboursOf(playerContext.CurrentCell, 30);
+				var nextCell = floodfillCounts.OrderByDescending(n => n.Value).ThenBy(n => Guid.NewGuid()).First().Key;
 
 				// Record direction
 				playerContext.SetNewDirection(nextCell);
@@ -372,4 +374,134 @@ public struct Cell
 
 	#endregion
 
+}
+
+public class PathfinderAlgorithm
+{
+
+	public Path FindPath(Cell start, Cell destination)
+	{
+		// Retain list of visited cells
+		var closed = new HashSet<Cell>();
+
+		// Create 
+		var queue = new PriorityQueue(0, new Path(start));
+
+		while (!queue.IsEmpty)
+		{
+			// Take the next path in the queue
+			var path = queue.Dequeue();
+
+			// Ignore this path if the last step of this path was added to the closed list.
+			if (closed.Contains(path.LastStep))
+			{
+				Console.Error.WriteLine();
+				continue;
+			}
+
+
+
+			// If the last step of this path is the destination, return this one.
+			if (path.LastStep.Equals(destination))
+				return path;
+
+			closed.Add(path.LastStep);
+
+			// Loop through the immediate neighbours of the current cell and build nested
+			// paths. Because the Neighbours() call will ignore closed cells by default, we
+			// should override this as this would mean ignoring the destination cell (it is
+			// the opponents current cell, so must be closed). Therefore we should ensure
+			// that we are including all cells but filtering out those that are closed but
+			// not the destination cell.
+			foreach (var cell in path.LastStep.Neighbours(includeClosed: true))
+			{
+				if (cell.IsClosed() && !cell.Equals(destination))
+					continue;
+
+				var newPath = path.AddStep(cell);
+				queue.Enqueue(newPath.TotalCost + ManhattanEstimate(cell, destination), newPath);
+			}
+		}
+
+		return null;
+	}
+
+	public static double EuclideanEstimate(Cell start, Cell destination)
+	{
+		return Math.Sqrt(Math.Pow(start.X - destination.X, 2) + Math.Pow(start.Y - destination.Y, 2));
+	}
+
+	private static int ManhattanEstimate(Cell start, Cell destination)
+	{
+		return (Math.Abs(destination.X - start.X) + Math.Abs(destination.Y - start.Y)) * 10;
+	}
+
+}
+
+public class Path : IEnumerable<Cell>
+{
+	public Cell LastStep { get; }
+	public Path PreviousSteps { get; }
+	public int TotalCost { get; }
+
+	private Path(Cell lastStep, Path previousSteps, int totalCost)
+	{
+		LastStep = lastStep;
+		PreviousSteps = previousSteps;
+		TotalCost = totalCost;
+	}
+
+	public Path(Cell start) : this(start, null, 0) { }
+
+	public Path AddStep(Cell step)
+	{
+		return new Path(step, this, TotalCost + 1);
+	}
+
+	public IEnumerator<Cell> GetEnumerator()
+	{
+		for (var p = this; p != null; p = p.PreviousSteps)
+		{
+			yield return p.LastStep;
+		}
+	}
+
+	IEnumerator IEnumerable.GetEnumerator()
+	{
+		return this.GetEnumerator();
+	}
+}
+
+public class PriorityQueue
+{
+	private readonly SortedDictionary<double, Queue<Path>> _list = new SortedDictionary<double, Queue<Path>>();
+
+	public PriorityQueue(double startPriority, Path startItemToQueue)
+	{
+		Enqueue(startPriority, startItemToQueue);
+	}
+
+	public void Enqueue(double priority, Path value)
+	{
+		Queue<Path> q;
+		if (!_list.TryGetValue(priority, out q))
+		{
+			q = new Queue<Path>();
+			_list.Add(priority, q);
+		}
+		q.Enqueue(value);
+	}
+
+	public Path Dequeue()
+	{
+		// will throw if there isn’t any first element!
+		var pair = _list.First();
+		var v = pair.Value.Dequeue();
+		if (pair.Value.Count == 0) // nothing left of the top priority.
+			_list.Remove(pair.Key);
+
+		return v;
+	}
+
+	public bool IsEmpty => !_list.Any();
 }
