@@ -394,12 +394,7 @@ public class PathfinderAlgorithm
 
 			// Ignore this path if the last step of this path was added to the closed list.
 			if (closed.Contains(path.LastStep))
-			{
-				Console.Error.WriteLine();
 				continue;
-			}
-
-
 
 			// If the last step of this path is the destination, return this one.
 			if (path.LastStep.Equals(destination))
