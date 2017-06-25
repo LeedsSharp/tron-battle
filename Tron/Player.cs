@@ -65,13 +65,16 @@ class Player
 
 }
 
+public class Direction
+{
+	public const string Left = "LEFT";
+	public const string Right = "RIGHT";
+	public const string Up = "UP";
+	public const string Down = "DOWN";
+}
+
 public class PlayerContext
 {
-	private const string Left = "LEFT";
-	private const string Right = "RIGHT";
-	private const string Up = "UP";
-	private const string Down = "DOWN";
-
 	private readonly Grid _grid;
 
 	public readonly HashSet<Cell> Path;
@@ -104,40 +107,40 @@ public class PlayerContext
 	{
 		if (nextCell.X > CurrentCell.X)
 		{
-			CurrentDirection = Right;
+			CurrentDirection = Direction.Right;
 		}
 		else if (nextCell.X < CurrentCell.X)
 		{
-			CurrentDirection = Left;
+			CurrentDirection = Direction.Left;
 		}
 		else if (nextCell.Y > CurrentCell.Y)
 		{
-			CurrentDirection = Down;
+			CurrentDirection = Direction.Down;
 		}
 		else
 		{
-			CurrentDirection = Up;
+			CurrentDirection = Direction.Up;
 		}
 	}
 
 	public bool CanMoveUp()
 	{
-		return !(CurrentCell.Y == 0 || CurrentDirection == Down || _grid.Cell(CurrentCell.X, CurrentCell.Y - 1).IsClosed());
+		return !(CurrentCell.Y == 0 || CurrentDirection == Direction.Down || _grid.Cell(CurrentCell.X, CurrentCell.Y - 1).IsClosed());
 	}
 
 	public bool CanMoveDown()
 	{
-		return !(CurrentCell.Y == _grid.MaxY || CurrentDirection == Up || _grid.Cell(CurrentCell.X, CurrentCell.Y + 1).IsClosed());
+		return !(CurrentCell.Y == _grid.MaxY || CurrentDirection == Direction.Up || _grid.Cell(CurrentCell.X, CurrentCell.Y + 1).IsClosed());
 	}
 
 	public bool CanMoveLeft()
 	{
-		return !(CurrentCell.X == 0 || CurrentDirection == Right || _grid.Cell(CurrentCell.X - 1, CurrentCell.Y).IsClosed());
+		return !(CurrentCell.X == 0 || CurrentDirection == Direction.Right || _grid.Cell(CurrentCell.X - 1, CurrentCell.Y).IsClosed());
 	}
 
 	public bool CanMoveRight()
 	{
-		return !(CurrentCell.X == _grid.MaxX || CurrentDirection == Left || _grid.Cell(CurrentCell.X + 1, CurrentCell.Y).IsClosed());
+		return !(CurrentCell.X == _grid.MaxX || CurrentDirection == Direction.Left || _grid.Cell(CurrentCell.X + 1, CurrentCell.Y).IsClosed());
 	}
 
 }
@@ -146,7 +149,7 @@ public class FloodFillAlgorithm
 {
 	private readonly Grid _grid;
 
-	private bool IncludeClosedCells { get; set; }
+	public bool IncludeClosedCells { get; set; }
 
 	public FloodFillAlgorithm(Grid grid)
 	{
@@ -172,20 +175,14 @@ public class FloodFillAlgorithm
 
 		var ret = new Dictionary<Cell, int>();
 
-		if (depth == 1)
+		foreach (var neighbour in immediateNeighbours)
 		{
-			ret.Add(cell, immediateNeighbours.Count);
-		}
-		else
-		{
-			foreach (var neighbour in immediateNeighbours)
-			{
-				var neighbourFloodFill = new HashSet<Cell>();
+			var neighbourFloodFill = new HashSet<Cell>();
 
+			if (depth > 1)
 				FindNeighbouringCellsOf(neighbour, depth, neighbourFloodFill);
 
-				ret.Add(neighbour, neighbourFloodFill.Count);
-			}
+			ret.Add(neighbour, neighbourFloodFill.Count);
 		}
 
 		return ret;
@@ -278,7 +275,7 @@ public class Grid
 	}
 }
 
-public class Cell
+public struct Cell
 {
 	public readonly int X;
 	public readonly int Y;
@@ -298,11 +295,58 @@ public class Cell
 		return _grid.ClosedCells.Contains(this);
 	}
 
+	public Cell? Up()
+	{
+		if (Y - 1 >= 0)
+			return _grid.Cell(X, Y - 1);
+
+		return null;
+	}
+
+	public Cell? Left()
+	{
+		if (X - 1 >= 0)
+			return _grid.Cell(X - 1, Y);
+
+		return null;
+	}
+
+	public Cell? Right()
+	{
+		if (X + 1 <= _grid.MaxX)
+			return _grid.Cell(X + 1, Y);
+
+		return null;
+	}
+
+	public Cell? Down()
+	{
+		if (Y + 1 <= _grid.MaxY)
+			return _grid.Cell(X, Y + 1);
+
+		return null;
+	}
+
+	public IEnumerable<Cell> Neighbours(bool includeClosed = false)
+	{
+		var allNeighbours = new[]
+			{
+				Up(),
+				Down(),
+				Left(),
+				Right()
+			}
+			.Where(x => x.HasValue)
+			.Select(x => x.Value);
+
+		return includeClosed ? allNeighbours : allNeighbours.Where(x => !x.IsClosed());
+	}
+
 	#region Overrides
 
 	public override string ToString()
 	{
-		return String.Format("{0},{1}", X, Y);
+		return $"{X},{Y}";
 	}
 
 	public override bool Equals(object obj)
