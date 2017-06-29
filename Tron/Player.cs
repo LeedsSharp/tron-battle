@@ -1,74 +1,129 @@
 using System;
-using System.Linq;
-using System.IO;
-using System.Text;
-using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
+using System.Linq;
 
 /**
  * Auto-generated code below aims at helping you parse
  * the standard input according to the problem statement.
  **/
-class Player
+class Game
 {
     static void Main(string[] args)
     {
-        string[] inputs;
-        var directions = new List<string> { "UP", "DOWN", "LEFT", "RIGHT" };
-        var currentPosition = new Point();
-
-        var grid = new bool[30, 20]; // true means a player has been at this coordinate
+        var players = new List<Player>();
+        Player me = null;
+        var board = new Board();
 
         // game loop
         while (true)
         {
-            inputs = Console.ReadLine().Split(' ');
+            var inputs = Console.ReadLine().Split(' ');
             int totalNumberOfPlayers = int.Parse(inputs[0]); // total number of players (2 to 4).
             int yourPlayerNumber = int.Parse(inputs[1]); // your player number (0 to 3).
-            for (int currentPlayer = 0; currentPlayer < totalNumberOfPlayers; currentPlayer++)
+            for (int p = 0; p < totalNumberOfPlayers; p++)
             {
                 inputs = Console.ReadLine().Split(' ');
-                int currentPlayerStartingX = int.Parse(inputs[0]); // starting X coordinate of lightcycle (or -1)
-                int currentPlayerStartingY = int.Parse(inputs[1]); // starting Y coordinate of lightcycle (or -1)
-                int currentPlayerCurrentX = int.Parse(inputs[2]); // current X coordinate of lightcycle (can be the same as X0 if you play before this player)
-                int currentPlayerCurrentY = int.Parse(inputs[3]); // current Y coordinate of lightcycle (can be the same as Y0 if you play before this player)
+                if (players.Count < (p + 1)) players.Add(new Player(board));
 
-                Console.Error.WriteLine("Player " + currentPlayer + " starting position: " + currentPlayerStartingX + ", " + currentPlayerStartingY);
-                Console.Error.WriteLine("Player " + currentPlayer + " current position: " + currentPlayerCurrentX + ", " + currentPlayerCurrentY);
+                players[p].StartPosition.X = int.Parse(inputs[0]); // starting X coordinate of lightcycle (or -1)
+                players[p].StartPosition.Y = int.Parse(inputs[1]); // starting Y coordinate of lightcycle (or -1)
+                
+                players[p].MoveTo(int.Parse(inputs[2]), int.Parse(inputs[3]));
 
-                grid[currentPlayerCurrentX, currentPlayerCurrentY] = true;
+                Console.Error.WriteLine("Player " + p + " starting position: " + players[p].StartPosition.X + ", " + players[p].StartPosition.Y);
+                Console.Error.WriteLine("Player " + p + " current position: " + players[p].CurrentPosition.X + ", " + players[p].CurrentPosition.Y);
+
 
                 // track your current position
-                if (currentPlayer == yourPlayerNumber)
+                if (p == yourPlayerNumber)
                 {
-                    currentPosition.X = currentPlayerCurrentX;
-                    currentPosition.Y = currentPlayerCurrentY;
+                    me = players[p];
                 }
             }
 
-            var validDirections = RemoveWhereOccupied(currentPosition, grid, directions);
-            var nextMove = RandomMouse(validDirections);
-            Console.WriteLine(nextMove); // A single line with UP, DOWN, LEFT or RIGHT
+            if (me == null) continue;
+
+
+            var nextMove = me.GenerateMove();
+            Console.WriteLine(nextMove.ToString().ToUpper()); // A single line with UP, DOWN, LEFT or RIGHT
         }
     }
+}
 
-    private static object RandomMouse(List<string> directions)
+public class Player
+{
+    private readonly Board _board;
+
+    public Player(Board board)
+    {
+        _board = board;
+        CurrentPosition = new Point();
+        StartPosition = new Point();
+    }
+
+    public Point StartPosition { get; internal set; }
+    public Point CurrentPosition { get; internal set; }
+
+    internal void MoveTo(int x, int y)
+    {
+        CurrentPosition.X = x;
+        CurrentPosition.Y = y;
+        _board.Visit(x, y);
+    }
+
+    public string GenerateMove()
+    {
+        var validDirections = _board.GetAvailbleDirections(CurrentPosition).ToList();
+        return RandomMouse(validDirections);
+    }
+
+    private string RandomMouse(List<Direction> directions)
     {
         var randomiser = new Random(DateTime.Now.Millisecond);
-        return directions[randomiser.Next(directions.Count)];
+        return directions[randomiser.Next(directions.Count)].ToString().ToUpper();
+    }
+}
+
+public class Board
+{
+    private const int XLength = 30;
+    private const int YLength = 20;
+
+    public Board()
+    {
+        Grid = new bool[XLength, YLength]; // true means a player has been at this coordinate
     }
 
-    private static List<string> RemoveWhereOccupied(Point currentPosition, bool[,] grid, List<string> validDirections)
+    private readonly bool[,] Grid;
+
+    public void Visit(int x, int y)
     {
-        if (currentPosition.X > 0 && grid[currentPosition.X - 1, currentPosition.Y] && validDirections.Any(d => d == "LEFT")) { }
-            validDirections.Remove("LEFT"); // can't go left
-        if (currentPosition.X < 29 && grid[currentPosition.X + 1, currentPosition.Y] && validDirections.Any(d => d == "RIGHT"))
-            validDirections.Remove("RIGHT"); // can't go right
-        if (currentPosition.Y > 0 && grid[currentPosition.X, currentPosition.Y - 1] && validDirections.Any(d => d == "UP"))
-            validDirections.Remove("UP"); // can't go up
-        if (currentPosition.Y < 19 && grid[currentPosition.X, currentPosition.Y + 1] && validDirections.Any(d => d == "DOWN"))
-            validDirections.Remove("DOWN"); // can't go down
-        return validDirections;
+        Grid[x, y] = true;
     }
+
+    bool SpaceAvailable(int x, int y)
+    {
+        return x >= 0 && x < XLength &&
+            y >= 0 && y < YLength &&
+            !Grid[x, y];
+    }
+
+    public IEnumerable<Direction> GetAvailbleDirections(Point p)
+    {
+        if (SpaceAvailable(p.X, p.Y-1)) yield return Direction.UP;
+        if (SpaceAvailable(p.X + 1, p.Y)) yield return Direction.RIGHT;
+        if (SpaceAvailable(p.X, p.Y + 1)) yield return Direction.DOWN;
+        if (SpaceAvailable(p.X - 1, p.Y)) yield return Direction.LEFT;
+    }
+}
+
+public class Point
+{
+    public int X { get; set; }
+    public int Y { get; set; }
+}
+
+public enum Direction
+{
+     UP, DOWN, LEFT, RIGHT
 }
