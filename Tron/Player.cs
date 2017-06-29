@@ -53,6 +53,7 @@ class Game
 public class Player
 {
     private readonly Board _board;
+    private Direction? _lastDirection = null;
 
     public Player(Board board)
     {
@@ -74,13 +75,18 @@ public class Player
     public string GenerateMove()
     {
         var validDirections = _board.GetAvailbleDirections(CurrentPosition).ToList();
-        return RandomMouse(validDirections);
+        return RandomStickyMouse(validDirections);
     }
 
-    private string RandomMouse(List<Direction> directions)
+    private string RandomStickyMouse(List<Direction> directions)
     {
-        var randomiser = new Random(DateTime.Now.Millisecond);
-        return directions[randomiser.Next(directions.Count)].ToString().ToUpper();
+        if (!_lastDirection.HasValue || !directions.Contains(_lastDirection.Value))
+        {
+            var randomiser = new Random(DateTime.Now.Millisecond);
+            _lastDirection = directions[randomiser.Next(directions.Count)];
+        }
+
+        return _lastDirection.ToString();
     }
 }
 
